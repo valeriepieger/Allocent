@@ -30,10 +30,23 @@ struct AllTabsView: View {
             NavigationView {
                 //TODO: Replace all this with actual dashboard page
                 VStack(spacing: 16) {
-                    NavigationLink(destination: IncomeView()) {
+                    NavigationLink(destination: IncomeView().navigationBarBackButtonHidden(true)) {
                         HStack {
                             Spacer()
                             Text("Income page")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            Spacer()
+                        }
+                        .padding()
+                        .background(Color.black)
+                        .cornerRadius(10)
+                    }
+                    
+                    NavigationLink(destination: EditCategoriesView().navigationBarBackButtonHidden(true)) {
+                        HStack {
+                            Spacer()
+                            Text("Edit Categories page")
                                 .font(.headline)
                                 .foregroundColor(.white)
                             Spacer()
@@ -77,9 +90,8 @@ struct AllTabsView: View {
             
             //ACCOUNT PAGE
             NavigationView {
-                //TODO: replace with actual account page
-                Text("Account view")
-                    .navigationTitle("Account")
+                AccountView()
+                    .navigationBarBackButtonHidden(true)
             }
             .tabItem {
                 Image(systemName: "person")

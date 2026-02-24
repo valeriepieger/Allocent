@@ -13,6 +13,9 @@ struct IncomeView: View {
         ZStack {
             Color("Background").ignoresSafeArea()
             ScrollView {
+                
+                HeaderWithBack(categoryName: "Income")
+                
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Total Monthly Income")
@@ -27,7 +30,7 @@ struct IncomeView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.white)
                     .cornerRadius(12)
-                    .shadow(color: .gray, radius: 2)
+                    .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
                     
                     //add income button
                     Button(action: {
@@ -49,7 +52,7 @@ struct IncomeView: View {
                         .font(.headline)
                         .padding(.top, 10)
                     
-                    //Ex Income Item hardcoded for now
+                    //hardcoded for now
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Salary")
@@ -73,11 +76,10 @@ struct IncomeView: View {
                     .padding()
                     .background(Color.white)
                     .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
                 }
                 .padding()
             }
-            .navigationTitle("Income")
-            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }
