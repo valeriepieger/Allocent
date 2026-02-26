@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import FirebaseFirestore
 import FirebaseAuth
+import Combine
 
 final class DashboardViewModel: ObservableObject {
     @Published var categorySummaries: [CategorySummary] = []
