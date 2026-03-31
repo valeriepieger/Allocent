@@ -9,10 +9,11 @@ import SwiftUI
 
 struct AccountView: View {
     @EnvironmentObject var session: SessionViewModel
-    @State private var pushNotifications = true
-    @State private var budgetAlerts = true
+    @State private var pushNotifications = false
+    @State private var budgetAlerts = false
+    @AppStorage("isDarkMode") private var darkMode = false
     
-    // get the user info to display
+    //get the user info to display
     private var currentUser: AppUser? {
         switch session.state {
         case .active(let user), .onboarding(let user):
@@ -61,7 +62,7 @@ struct AccountView: View {
 
                         Text(displayEmail)
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.secondary)
                     }
 
                     Spacer()
@@ -86,7 +87,7 @@ struct AccountView: View {
                                 .navigationBarBackButtonHidden()
                         } label: {
                             AccountRowNavigation(title: "Edit Profile", icon: "person")
-                        }
+                        }.buttonStyle(.plain)
                         
                         Divider()
                         NavigationLink {
@@ -94,9 +95,9 @@ struct AccountView: View {
                                 .navigationBarBackButtonHidden()
                         } label: {
                             AccountRowNavigation(title: "Email Preferences", icon: "envelope")
-                        }
+                        }.buttonStyle(.plain)
                     }
-                    .background(Color.white)
+                    .background(Color("CardBackground"))
                     .cornerRadius(9)
                     .padding(.horizontal)
                     .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
@@ -116,14 +117,16 @@ struct AccountView: View {
                         Divider()
                         AccountRowToggle(title: "Budget Alerts", icon: "bell.badge", isOn: $budgetAlerts)
                         Divider()
+                        AccountRowToggle(title: "Dark Mode", icon: "moon", isOn: $darkMode)
+                        Divider()
                         NavigationLink {
                             ConnectedAccountsView()
                                 .navigationBarBackButtonHidden()
                         } label: {
                             AccountRowNavigation(title: "Connected Accounts", icon: "creditcard")
-                        }
+                        }.buttonStyle(.plain)
                     }
-                    .background(Color.white)
+                    .background(Color("CardBackground"))
                     .cornerRadius(9)
                     .padding()
                     .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
@@ -145,7 +148,7 @@ struct AccountView: View {
                         Divider()
                         AccountRowNavigation(title: "Terms of Service", icon: "doc.text")
                     }
-                    .background(Color.white)
+                    .background(Color("CardBackground"))
                     .cornerRadius(9)
                     .padding(.horizontal)
                     .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
@@ -157,14 +160,14 @@ struct AccountView: View {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
                             Text("Log Out")
                         }
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.white)
+                        .background(Color("CardBackground"))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.red, lineWidth: 0.4)
+                                .stroke(.red, lineWidth: 0.4)
                         )
                     }
                     .padding()
@@ -172,6 +175,15 @@ struct AccountView: View {
                 //                    .padding(.horizontal)
             }
         }
+        .onChange(of: darkMode) { _, newValue in
+            applyTheme(darkMode: newValue)
+        }
+    }
+
+    private func applyTheme(darkMode: Bool) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else { return }
+        window.overrideUserInterfaceStyle = darkMode ? .dark : .light
     }
 }
 
@@ -183,12 +195,12 @@ struct AccountRowNavigation: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundStyle(Color(.black))
+                .foregroundStyle(.primary)
             Text(title)
-                .foregroundStyle(Color(.black))
+                .foregroundStyle(.primary)
             Spacer()
             Image(systemName: "chevron.right")
-                .foregroundColor(.gray)
+                .foregroundStyle(.secondary)
         }
         .padding()
     }
@@ -203,11 +215,10 @@ struct AccountRowToggle: View {
         HStack {
             Image(systemName: icon)
             Text(title)
-//                .fontWeight(.)
             Spacer()
             Toggle("", isOn: $isOn)
                 .labelsHidden()
-                .tint(.black)
+                .tint(Color("OliveGreen"))
         }
         .padding()
     }

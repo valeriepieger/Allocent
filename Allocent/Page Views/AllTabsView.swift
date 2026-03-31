@@ -7,6 +7,7 @@
 
 
 import SwiftUI
+import UserNotifications
 
 struct AllTabsView: View {
     @State private var selectedTab = 0
@@ -28,7 +29,7 @@ struct AllTabsView: View {
                 }
                 .tag(1)
 
-            Text("Advisor Chatbot View")
+            AdvisorView()
                 .tabItem {
                     Image(systemName: "bubble.right")
                     Text("Advisor")
@@ -43,6 +44,13 @@ struct AllTabsView: View {
                 .tag(3)
         }
         .tint(Color("OliveGreen"))
+        .task {
+            let center = UNUserNotificationCenter.current()
+            let status = await center.notificationSettings().authorizationStatus
+            if status == .notDetermined {
+                try? await center.requestAuthorization(options: [.alert, .sound, .badge])
+            }
+        }
     }
 }
 

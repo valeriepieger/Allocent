@@ -19,16 +19,16 @@ struct PrimaryActionButton: View {
             ZStack {
                 if isLoading {
                     ProgressView()
-                        .tint(.white)
+                        .tint(Color("PrimaryButtonText"))
                 } else {
                     Text(title)
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(Color("PrimaryButtonText"))
                 }
             }
             .frame(maxWidth: .infinity)
             .frame(height: 52)
-            .background(disabled ? Color.black.opacity(0.4) : Color.black)
+            .background(disabled ? Color("PrimaryButton").opacity(0.4) : Color("PrimaryButton"))
             .cornerRadius(12)
         }
         .disabled(disabled || isLoading)

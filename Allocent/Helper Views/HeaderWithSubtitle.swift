@@ -19,7 +19,7 @@ struct HeaderWithSubtitle: View {
 
                 Text(subtitle)
                     .font(.subheadline)
-                    .foregroundColor(Color.black.opacity(0.55))
+                    .foregroundStyle(.secondary)
             }
 //            .padding(.horizontal)
             .padding(.top, 10)

@@ -38,10 +38,10 @@ struct AuthLandingView: View {
                         } label: {
                             Text("Sign In")
                                 .font(.headline)
-                                .foregroundColor(.white)
+                                .foregroundStyle(Color("PrimaryButtonText"))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 56)
-                                .background(Color.black)
+                                .background(Color("PrimaryButton"))
                                 .cornerRadius(16)
                         }
                         .buttonStyle(.plain)
@@ -51,14 +51,14 @@ struct AuthLandingView: View {
                         } label: {
                             Text("Create Account")
                                 .font(.headline)
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 56)
-                                .background(Color.white)
+                                .background(Color("CardBackground"))
                                 .cornerRadius(16)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                                        .stroke(.primary.opacity(0.08), lineWidth: 1)
                                 )
                         }
                         .buttonStyle(.plain)
