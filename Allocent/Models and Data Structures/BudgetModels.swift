@@ -21,6 +21,7 @@ struct CategorySummary: Identifiable, Hashable {
     var name: String
     var limit: Double
     var spent: Double
+    var colorHex: String?
     
     var left: Double {
         max(limit - spent, 0)

@@ -13,11 +13,11 @@ struct DashboardView: View {
                     Header(categoryName: "Dashboard")
                     
                     VStack {
-                        SemiCircleProgressView(
-                            safeToSpend: viewModel.safeToSpend,
-                            totalBudget: viewModel.totalBudget
+                        BudgetDonutChartView(
+                            summaries: viewModel.categorySummaries,
+                            totalSpent: viewModel.totalSpent
                         )
-                        .frame(height: 220)
+                        .frame(height: 280)
                     }
                     .frame(maxWidth: .infinity)
                     .padding()

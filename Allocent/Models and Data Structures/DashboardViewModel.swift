@@ -96,7 +96,8 @@ final class DashboardViewModel: ObservableObject {
                     id: category.id,
                     name: category.name,
                     limit: category.limit,
-                    spent: spent
+                    spent: spent,
+                    colorHex: category.colorHex
                 )
             )
             totalBudget += category.limit
