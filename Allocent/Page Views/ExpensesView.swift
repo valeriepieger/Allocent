@@ -203,7 +203,7 @@ private struct CategoryPicker: View {
             
             // Picker avoids SwiftUI Menu collapsing rows that share the same button title
             // (duplicate or empty category names).
-            Picker("Category", selection: $selectedCategory) {
+            Picker("", selection: $selectedCategory) {
                 Text("Select a category")
                     .tag(nil as BudgetCategory?)
                 ForEach(categories) { category in
