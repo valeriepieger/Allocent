@@ -201,10 +201,6 @@ private struct AddIncomeSheet: View {
                     }
                     .disabled(!isValid || isSaving)
                 }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button("Done") { focusedField = nil }
-                }
             }
             .scrollDismissesKeyboard(.interactively)
         }

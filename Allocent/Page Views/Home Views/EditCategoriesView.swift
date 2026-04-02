@@ -7,10 +7,17 @@
 
 import SwiftUI
 
+private func parseCategoryNumeric(_ text: String) -> Double? {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return nil }
+    return Double(trimmed.replacingOccurrences(of: ",", with: "."))
+}
+
 struct EditCategoriesView: View {
     @StateObject private var viewModel = EditCategoriesViewModel()
     @State private var hasAppeared = false
     @State private var showAddCategory = false
+    @AppStorage("allocent.categories.usePercentage") private var usePercentageAllocation = false
     
     var body: some View {
         ZStack {
@@ -35,15 +42,27 @@ struct EditCategoriesView: View {
                     .cornerRadius(12)
                     .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
                     
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Allocation Method")
-                                .font(.headline)
-                            Text("Dollar-based (limit per category)")
-                                .font(.caption)
-                                .foregroundColor(.gray)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Allocation method")
+                            .font(.headline)
+                        HStack {
+                            Text("Dollars")
+                                .font(.subheadline.weight(usePercentageAllocation ? .regular : .semibold))
+                                .foregroundColor(usePercentageAllocation ? .gray : .primary)
+                            Spacer()
+                            Toggle("", isOn: $usePercentageAllocation)
+                                .labelsHidden()
+                                .tint(Color("OliveGreen"))
+                            Spacer()
+                            Text("% of income")
+                                .font(.subheadline.weight(usePercentageAllocation ? .semibold : .regular))
+                                .foregroundColor(usePercentageAllocation ? .primary : .gray)
                         }
-                        Spacer()
+                        Text(usePercentageAllocation
+                             ? "Set each category as a percent of your total monthly income. Limits are saved as dollars."
+                             : "Set each category limit in dollars.")
+                            .font(.caption)
+                            .foregroundColor(.gray)
                     }
                     .padding()
                     .background(Color.white)
@@ -83,6 +102,7 @@ struct EditCategoriesView: View {
                                     EditCategoryRow(
                                         category: category,
                                         totalIncome: viewModel.totalIncome,
+                                        usePercentageAllocation: usePercentageAllocation,
                                         onSave: { name, limit in
                                             Task { await viewModel.updateCategory(id: category.id, name: name, limit: limit) }
                                         },
@@ -112,6 +132,7 @@ struct EditCategoriesView: View {
 private struct EditCategoryRow: View {
     let category: BudgetCategory
     let totalIncome: Double
+    let usePercentageAllocation: Bool
     let onSave: (String, Double) -> Void
     let onDelete: () -> Void
     
@@ -119,13 +140,26 @@ private struct EditCategoryRow: View {
     @State private var limitText: String = ""
     @State private var isEditing = false
     
-    private var limit: Double {
-        Double(limitText) ?? 0
+    private var limitDollarsFromField: Double? {
+        let raw = parseCategoryNumeric(limitText) ?? 0
+        if usePercentageAllocation {
+            guard totalIncome > 0 else { return raw == 0 ? 0 : nil }
+            guard raw >= 0, raw <= 100 else { return nil }
+            return totalIncome * (raw / 100)
+        }
+        return max(0, raw)
     }
     
-    private var percentageText: String {
-        guard totalIncome > 0, limit > 0 else { return "" }
-        let pct = (limit / totalIncome) * 100
+    private var dollarPreview: String? {
+        guard usePercentageAllocation, isEditing,
+              let d = limitDollarsFromField, totalIncome > 0,
+              (parseCategoryNumeric(limitText) ?? 0) > 0 else { return nil }
+        return String(format: "≈ $%.2f / month", d)
+    }
+    
+    private var percentageCaption: String {
+        guard totalIncome > 0, category.limit > 0 else { return "" }
+        let pct = (category.limit / totalIncome) * 100
         return String(format: "%.0f%% of income", pct)
     }
     
@@ -143,12 +177,19 @@ private struct EditCategoryRow: View {
                 Spacer()
                 Button(action: {
                     if isEditing {
-                        onSave(name.isEmpty ? category.name : name, limit)
+                        guard let dollars = limitDollarsFromField else { return }
+                        onSave(name.isEmpty ? category.name : name, dollars)
+                        isEditing = false
                     } else {
                         name = category.name
-                        limitText = String(format: "%.2f", category.limit)
+                        if usePercentageAllocation, totalIncome > 0 {
+                            let pct = (category.limit / totalIncome) * 100
+                            limitText = String(format: "%.2f", pct)
+                        } else {
+                            limitText = String(format: "%.2f", category.limit)
+                        }
+                        isEditing = true
                     }
-                    isEditing.toggle()
                 }) {
                     Text(isEditing ? "Done" : "Edit")
                         .font(.subheadline.weight(.medium))
@@ -160,28 +201,57 @@ private struct EditCategoryRow: View {
                 }
             }
             
-            HStack {
-                Text("Monthly limit:")
-                    .foregroundColor(.gray)
-                if isEditing {
-                    HStack(spacing: 4) {
-                        Text("$")
-                        TextField("0.00", text: $limitText)
-                            .keyboardType(.decimalPad)
-                            .padding(8)
-                            .background(Color(UIColor.systemGray6))
-                            .cornerRadius(8)
-                            .frame(width: 100)
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(usePercentageAllocation ? "Percent of income:" : "Monthly limit:")
+                        .foregroundColor(.gray)
+                    if isEditing {
+                        if usePercentageAllocation {
+                            HStack(spacing: 4) {
+                                TextField("0", text: $limitText)
+                                    .keyboardType(.decimalPad)
+                                    .padding(8)
+                                    .background(Color(UIColor.systemGray6))
+                                    .cornerRadius(8)
+                                    .frame(width: 100)
+                                Text("%")
+                                    .foregroundColor(.gray)
+                            }
+                        } else {
+                            HStack(spacing: 4) {
+                                Text("$")
+                                TextField("0.00", text: $limitText)
+                                    .keyboardType(.decimalPad)
+                                    .padding(8)
+                                    .background(Color(UIColor.systemGray6))
+                                    .cornerRadius(8)
+                                    .frame(width: 100)
+                            }
+                        }
+                    } else {
+                        Text("$\(category.limit, specifier: "%.2f")")
+                            .font(.subheadline.weight(.medium))
                     }
-                } else {
-                    Text("$\(category.limit, specifier: "%.2f")")
-                        .font(.subheadline.weight(.medium))
                 }
-                if !percentageText.isEmpty {
-                    Text(percentageText)
+                Spacer(minLength: 8)
+                if !percentageCaption.isEmpty {
+                    Text(percentageCaption)
                         .font(.caption)
                         .foregroundColor(.gray)
+                        .multilineTextAlignment(.trailing)
                 }
+            }
+            
+            if let dollarPreview {
+                Text(dollarPreview)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            
+            if usePercentageAllocation && isEditing && totalIncome <= 0 {
+                Text("Add income sources to budget by percentage.")
+                    .font(.caption)
+                    .foregroundColor(.orange)
             }
         }
         .padding()
@@ -190,7 +260,40 @@ private struct EditCategoryRow: View {
         .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
         .onAppear {
             name = category.name
-            limitText = String(format: "%.2f", category.limit)
+            if usePercentageAllocation, totalIncome > 0 {
+                let pct = (category.limit / totalIncome) * 100
+                limitText = String(format: "%.2f", pct)
+            } else {
+                limitText = String(format: "%.2f", category.limit)
+            }
+        }
+        .onChange(of: category.limit) { _, _ in
+            if !isEditing {
+                if usePercentageAllocation, totalIncome > 0 {
+                    let pct = (category.limit / totalIncome) * 100
+                    limitText = String(format: "%.2f", pct)
+                } else {
+                    limitText = String(format: "%.2f", category.limit)
+                }
+            }
+        }
+        .onChange(of: usePercentageAllocation) { _, newValue in
+            if !isEditing {
+                if newValue, totalIncome > 0 {
+                    let pct = (category.limit / totalIncome) * 100
+                    limitText = String(format: "%.2f", pct)
+                } else {
+                    limitText = String(format: "%.2f", category.limit)
+                }
+            }
+        }
+        .onChange(of: totalIncome) { _, _ in
+            if !isEditing {
+                if usePercentageAllocation, totalIncome > 0 {
+                    let pct = (category.limit / totalIncome) * 100
+                    limitText = String(format: "%.2f", pct)
+                }
+            }
         }
     }
 }
@@ -198,16 +301,33 @@ private struct EditCategoryRow: View {
 private struct AddCategorySheet: View {
     @ObservedObject var viewModel: EditCategoriesViewModel
     @Binding var isPresented: Bool
+    @AppStorage("allocent.categories.usePercentage") private var usePercentageAllocation = false
     @State private var name = ""
     @State private var limitText = ""
     @State private var isSaving = false
     
-    private var limit: Double {
-        Double(limitText) ?? 0
+    private var dollarLimitForSave: Double? {
+        let raw = parseCategoryNumeric(limitText) ?? 0
+        if usePercentageAllocation {
+            guard raw >= 0, raw <= 100 else { return nil }
+            if raw > 0, viewModel.totalIncome <= 0 { return nil }
+            return viewModel.totalIncome * (raw / 100)
+        }
+        guard raw >= 0 else { return nil }
+        return raw
     }
     
     private var isValid: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty && limit >= 0
+        guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return false }
+        return dollarLimitForSave != nil
+    }
+    
+    private var previewDollars: String? {
+        guard usePercentageAllocation,
+              viewModel.totalIncome > 0,
+              let p = parseCategoryNumeric(limitText), p > 0, p <= 100 else { return nil }
+        let d = viewModel.totalIncome * (p / 100)
+        return String(format: "≈ $%.2f / month", d)
     }
     
     var body: some View {
@@ -221,16 +341,36 @@ private struct AddCategorySheet: View {
                             .foregroundColor(.gray)
                         TextField("e.g. Food, Bills", text: $name)
                             .textFieldStyle(.roundedBorder)
-                            .autocapitalization(.words)
+                            .textInputAutocapitalization(.words)
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Monthly limit ($)")
+                        Text(usePercentageAllocation ? "Percent of income" : "Monthly limit ($)")
                             .font(.subheadline)
                             .foregroundColor(.gray)
-                        TextField("0.00", text: $limitText)
-                            .keyboardType(.decimalPad)
-                            .textFieldStyle(.roundedBorder)
+                        if usePercentageAllocation {
+                            HStack {
+                                TextField("e.g. 10", text: $limitText)
+                                    .keyboardType(.decimalPad)
+                                    .textFieldStyle(.roundedBorder)
+                                Text("%")
+                                    .foregroundColor(.gray)
+                            }
+                            if let previewDollars {
+                                Text(previewDollars)
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            if viewModel.totalIncome <= 0 {
+                                Text("Add income on the Income screen to use percentage allocation.")
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
+                            }
+                        } else {
+                            TextField("0.00", text: $limitText)
+                                .keyboardType(.decimalPad)
+                                .textFieldStyle(.roundedBorder)
+                        }
                     }
                     
                     Spacer()
@@ -256,7 +396,7 @@ private struct AddCategorySheet: View {
     }
     
     private func save() {
-        guard isValid else { return }
+        guard let limit = dollarLimitForSave else { return }
         isSaving = true
         Task {
             await viewModel.addCategory(name: name.trimmingCharacters(in: .whitespaces), limit: limit)
