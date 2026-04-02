@@ -20,27 +20,34 @@ struct AllTabsView: View {
                     Text("Home")
                 }
                 .tag(0)
+            
+            TransactionListView()
+                .tabItem {
+                    Image(systemName: "list.bullet")
+                    Text("Transactions")
+                }
+                .tag(1)
 
             ExpensesView()
                 .tabItem {
                     Image(systemName: "plus.circle")
                     Text("Expenses")
                 }
-                .tag(1)
+                .tag(2)
 
             Text("Advisor Chatbot View")
                 .tabItem {
                     Image(systemName: "bubble.right")
                     Text("Advisor")
                 }
-                .tag(2)
+                .tag(3)
 
             AccountView()
                 .tabItem {
                     Image(systemName: "person")
                     Text("Account")
                 }
-                .tag(3)
+                .tag(4)
         }
         .tint(Color("OliveGreen"))
     }

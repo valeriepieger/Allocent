@@ -26,5 +26,6 @@ struct Allocent: App {
         WindowGroup {
             RootView()
         }
+        .modelContainer(for: Transaction.self) // added for transactions
     }
 }
