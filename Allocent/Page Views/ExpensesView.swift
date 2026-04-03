@@ -2,6 +2,15 @@ import SwiftUI
 import FirebaseFirestore
 import FirebaseAuth
 
+private func optionalFirestoreDouble(_ value: Any?) -> Double? {
+    guard let v = value, !(v is NSNull) else { return nil }
+    if let d = v as? Double { return d }
+    if let n = v as? NSNumber { return n.doubleValue }
+    if let i = v as? Int { return Double(i) }
+    if let i = v as? Int64 { return Double(i) }
+    return nil
+}
+
 private enum ExpenseFormField: Hashable {
     case amount, note
 }
@@ -106,7 +115,8 @@ struct ExpensesView: View {
                         id: doc.documentID,
                         name: data["name"] as? String ?? "",
                         limit: data["limit"] as? Double ?? 0,
-                        colorHex: data["colorHex"] as? String
+                        colorHex: data["colorHex"] as? String,
+                        limitPercent: optionalFirestoreDouble(data["limitPercent"])
                     )
                 }
                 

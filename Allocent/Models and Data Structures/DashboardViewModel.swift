@@ -96,7 +96,8 @@ final class DashboardViewModel: ObservableObject {
                 id: doc.documentID,
                 name: data["name"] as? String ?? "",
                 limit: Self.double(fromFirestore: data["limit"]),
-                colorHex: data["colorHex"] as? String
+                colorHex: data["colorHex"] as? String,
+                limitPercent: Self.optionalDouble(data["limitPercent"])
             )
             categories[category.id] = category
         }
@@ -117,16 +118,17 @@ final class DashboardViewModel: ObservableObject {
         
         for category in categories.values {
             let spent = spentByCategory[category.id, default: 0]
+            let cap = category.effectiveLimit(monthlyIncome: totalMonthlyIncome)
             summaries.append(
                 CategorySummary(
                     id: category.id,
                     name: category.name,
-                    limit: category.limit,
+                    limit: cap,
                     spent: spent,
                     colorHex: category.colorHex
                 )
             )
-            totalBudget += category.limit
+            totalBudget += cap
             totalSpent += spent
         }
         
@@ -145,6 +147,11 @@ final class DashboardViewModel: ObservableObject {
         if let i = value as? Int { return Double(i) }
         if let i = value as? Int64 { return Double(i) }
         return 0
+    }
+    
+    private static func optionalDouble(_ value: Any?) -> Double? {
+        guard let value, !(value is NSNull) else { return nil }
+        return double(fromFirestore: value)
     }
 }
 
