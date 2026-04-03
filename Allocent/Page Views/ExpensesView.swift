@@ -125,8 +125,9 @@ struct ExpensesView: View {
                     if let current = selectedCategory,
                        let match = fetched.first(where: { $0.id == current.id }) {
                         selectedCategory = match
-                    } else if selectedCategory == nil {
-                        selectedCategory = fetched.first
+                    } else if selectedCategory != nil,
+                              fetched.first(where: { $0.id == selectedCategory?.id }) == nil {
+                        selectedCategory = nil
                     }
                 }
             }
@@ -214,37 +215,35 @@ private struct CategoryPicker: View {
             Text("Category *")
                 .font(.subheadline)
             
-            Picker(selection: $selectedCategory) {
-                Text("Select a category")
-                    .tag(nil as BudgetCategory?)
-                ForEach(categories) { category in
-                    Text(rowLabel(for: category))
-                        .tag(Optional(category))
+            HStack {
+                Picker(selection: $selectedCategory) {
+                    Text("Select a category")
+                        .tag(nil as BudgetCategory?)
+                    ForEach(categories) { category in
+                        Text(rowLabel(for: category))
+                            .tag(Optional(category))
+                    }
+                } label: {
+                    HStack(spacing: 12) {
+                        Text(selectionTitle)
+                            .font(.body)
+                            .foregroundStyle(selectedCategory == nil ? Color.gray : Color.primary)
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .fixedSize()
+                    }
                 }
-            } label: {
-                HStack(alignment: .center, spacing: 12) {
-                    Text(selectionTitle)
-                        .font(.body)
-                        .foregroundStyle(selectedCategory == nil ? Color.gray : Color.primary)
-                        .lineLimit(1)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .fixedSize()
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white)
-                .cornerRadius(12)
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                .pickerStyle(.menu)
+                .tint(.primary)
             }
-            .pickerStyle(.menu)
-            .tint(.primary)
+            .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, -12)
+            .background(Color.white)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
         }
     }
 }
