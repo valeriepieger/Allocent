@@ -43,20 +43,18 @@ struct EditCategoriesView: View {
                     .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
                     
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Allocation method")
-                            .font(.headline)
-                        HStack {
-                            Text("Dollars")
-                                .font(.subheadline.weight(usePercentageAllocation ? .regular : .semibold))
-                                .foregroundColor(usePercentageAllocation ? .gray : .primary)
-                            Spacer()
+                        HStack(alignment: .center, spacing: 16) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Allocation method")
+                                    .font(.headline)
+                                Text(usePercentageAllocation ? "Percentage-based" : "Dollar-based")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            Spacer(minLength: 0)
                             Toggle("", isOn: $usePercentageAllocation)
                                 .labelsHidden()
                                 .tint(Color("OliveGreen"))
-                            Spacer()
-                            Text("% of income")
-                                .font(.subheadline.weight(usePercentageAllocation ? .semibold : .regular))
-                                .foregroundColor(usePercentageAllocation ? .primary : .gray)
                         }
                         Text(usePercentageAllocation
                              ? "Each category stores its percent of income; dollar limits update automatically when income changes."
