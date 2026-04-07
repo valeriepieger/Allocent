@@ -32,25 +32,25 @@ struct SignInView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Email")
                             .font(.footnote)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
 
                         TextField("name@example.com", text: $vm.form.email)
                             .textInputAutocapitalization(.never)
                             .keyboardType(.emailAddress)
                             .autocorrectionDisabled()
                             .padding()
-                            .background(Color.white)
+                            .background(Color("CardBackground"))
                             .cornerRadius(16)
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Password")
                             .font(.footnote)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
 
                         SecureField("Password", text: $vm.form.password)
                             .padding()
-                            .background(Color.white)
+                            .background(Color("CardBackground"))
                             .cornerRadius(16)
                     }
 

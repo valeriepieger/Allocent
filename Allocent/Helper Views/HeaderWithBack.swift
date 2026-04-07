@@ -20,7 +20,7 @@ struct HeaderWithBack: View {
                 Image(systemName: "arrow.left")
                     .font(.title)
                     .padding(.trailing, 10)
-                    .foregroundColor(.black)
+                    .foregroundStyle(.primary)
             }
             
             Text(pageName)
