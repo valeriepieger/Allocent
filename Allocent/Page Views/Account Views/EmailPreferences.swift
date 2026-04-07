@@ -53,7 +53,7 @@ struct EmailPreferencesView: View {
                             PreferenceToggleRow(title: "Bill Reminders", description: "Reminders for upcoming bills and due dates", isOn: $billReminders)
                         }
                         .padding()
-                        .background(Color.white)
+                        .background(Color("CardBackground"))
                         .cornerRadius(24)
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                         
@@ -67,7 +67,7 @@ struct EmailPreferencesView: View {
                             PreferenceToggleRow(title: "Product Updates", description: "New features and improvements to the app", isOn: $productUpdates)
                         }
                         .padding()
-                        .background(Color.white)
+                        .background(Color("CardBackground"))
                         .cornerRadius(24)
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                         
@@ -79,7 +79,7 @@ struct EmailPreferencesView: View {
                             PreferenceToggleRow(title: "Promotional Emails", description: "Special offers and partner promotions", isOn: $marketingEmails, showDivider: false)
                         }
                         .padding()
-                        .background(Color.white)
+                        .background(Color("CardBackground"))
                         .cornerRadius(24)
                         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                         
@@ -126,14 +126,14 @@ struct PreferenceToggleRow: View {
                     Text(title)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.black)
+                        .foregroundStyle(.primary)
                     Text(description)
                         .font(.caption)
                         .foregroundColor(.gray)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .tint(.black)
+            .tint(Color("OliveGreen"))
         }
     }
 }

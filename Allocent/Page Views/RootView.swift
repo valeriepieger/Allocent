@@ -9,6 +9,7 @@ import SwiftUI
 
 struct RootView: View {
     @StateObject private var session = SessionViewModel()
+    @AppStorage("isDarkMode") private var isDarkMode = false
 
     var body: some View {
         ZStack {
@@ -65,6 +66,11 @@ struct RootView: View {
         }
         .task {
             await session.loadSession()
+        }
+        .onAppear {
+            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let window = windowScene.windows.first else { return }
+            window.overrideUserInterfaceStyle = isDarkMode ? .dark : .light
         }
     }
 }

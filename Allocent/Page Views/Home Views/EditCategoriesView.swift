@@ -21,17 +21,17 @@ struct EditCategoriesView: View {
                 VStack(spacing: 16) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Left to Budget")
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                         Text("$\(viewModel.leftToBudget, specifier: "%.2f")")
                             .font(.title)
                             .fontWeight(.bold)
                         Text(viewModel.allocationPercentText)
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white)
+                    .background(Color("CardBackground"))
                     .cornerRadius(12)
                     .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
                     
@@ -41,12 +41,12 @@ struct EditCategoriesView: View {
                                 .font(.headline)
                             Text("Dollar-based (limit per category)")
                                 .font(.caption)
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.secondary)
                         }
                         Spacer()
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(Color("CardBackground"))
                     .cornerRadius(12)
                     .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
                     
@@ -74,7 +74,7 @@ struct EditCategoriesView: View {
                         if viewModel.categories.isEmpty {
                             Text("No categories yet. Tap Add to create one.")
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.secondary)
                                 .padding(.vertical, 24)
                                 .frame(maxWidth: .infinity)
                         } else {
@@ -162,7 +162,7 @@ private struct EditCategoryRow: View {
             
             HStack {
                 Text("Monthly limit:")
-                    .foregroundColor(.gray)
+                    .foregroundStyle(.secondary)
                 if isEditing {
                     HStack(spacing: 4) {
                         Text("$")
@@ -180,12 +180,12 @@ private struct EditCategoryRow: View {
                 if !percentageText.isEmpty {
                     Text(percentageText)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
         .padding()
-        .background(Color.white)
+        .background(Color("CardBackground"))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
         .onAppear {
@@ -218,7 +218,7 @@ private struct AddCategorySheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Category name")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                         TextField("e.g. Food, Bills", text: $name)
                             .textFieldStyle(.roundedBorder)
                             .autocapitalization(.words)
@@ -227,7 +227,7 @@ private struct AddCategorySheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Monthly limit ($)")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                         TextField("0.00", text: $limitText)
                             .keyboardType(.decimalPad)
                             .textFieldStyle(.roundedBorder)

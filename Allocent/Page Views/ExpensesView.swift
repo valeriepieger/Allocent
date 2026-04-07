@@ -26,7 +26,7 @@ struct ExpensesView: View {
                     
                     Text("Track your spending")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal)
                     
                     VStack(spacing: 20) {
@@ -55,10 +55,10 @@ struct ExpensesView: View {
                             Text("Add Expense")
                                 .fontWeight(.semibold)
                         }
-                        .foregroundColor(.white)
+                        .foregroundStyle(Color("PrimaryButtonText"))
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(isFormValid ? Color.black : Color.gray.opacity(0.6))
+                        .background(isFormValid ? Color("PrimaryButton") : Color("PrimaryButton").opacity(0.4))
                         .cornerRadius(12)
                     }
                     .disabled(!isFormValid || isSaving)
@@ -147,12 +147,12 @@ private struct AmountField: View {
             
             HStack {
                 Text("$")
-                    .foregroundColor(.gray)
+                    .foregroundStyle(.secondary)
                 TextField("0.00", text: $amountText)
                     .keyboardType(.decimalPad)
             }
             .padding()
-            .background(Color.white)
+            .background(Color("CardBackground"))
             .cornerRadius(12)
             .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
         }
@@ -177,13 +177,13 @@ private struct CategoryPicker: View {
             } label: {
                 HStack {
                     Text(selectedCategory?.name ?? "Select a category")
-                        .foregroundColor(selectedCategory == nil ? .gray : .black)
+                        .foregroundStyle(selectedCategory == nil ? .secondary : .primary)
                     Spacer()
                     Image(systemName: "chevron.down")
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.secondary)
                 }
                 .padding()
-                .background(Color.white)
+                .background(Color("CardBackground"))
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
             }
@@ -207,7 +207,7 @@ private struct DateField: View {
             .datePickerStyle(.compact)
             .labelsHidden()
             .padding()
-            .background(Color.white)
+            .background(Color("CardBackground"))
             .cornerRadius(12)
             .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
         }
@@ -225,7 +225,7 @@ private struct NoteField: View {
             TextField("e.g., Lunch with friends", text: $note, axis: .vertical)
                 .lineLimit(1...3)
                 .padding()
-                .background(Color.white)
+                .background(Color("CardBackground"))
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
         }

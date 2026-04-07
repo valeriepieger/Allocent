@@ -49,11 +49,11 @@ struct OnboardingView: View {
 
                 }
                 .padding(16)
-                .background(Color.white)
+                .background(Color("CardBackground"))
                 .cornerRadius(20)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.black.opacity(0.08), lineWidth: 1)
+                        .stroke(.primary.opacity(0.08), lineWidth: 1)
                 )
                 .padding(.horizontal, 24)
 
