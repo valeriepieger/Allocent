@@ -175,6 +175,7 @@ struct ExpensesView: View {
 
         isSaving = true
         errorMessage = nil
+        focusedField = nil
         Task {
             do {
                 try await ExpenseService.addExpense(
@@ -203,6 +204,9 @@ struct ExpensesView: View {
 
 private struct AmountField: View {
     @Binding var amountText: String
+    var focusedField: FocusState<ExpenseFormField?>.Binding
+    var field: ExpenseFormField
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Amount *")
@@ -226,15 +230,37 @@ private struct AmountField: View {
 private struct CategoryPicker: View {
     var categories: [BudgetCategory]
     @Binding var selectedCategory: BudgetCategory?
+
+    private func rowLabel(for category: BudgetCategory) -> String {
+        let base = category.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if base.isEmpty {
+            return "Unnamed category"
+        }
+        return base
+    }
+
+    private var selectionTitle: String {
+        guard let c = selectedCategory else { return "Select a category" }
+        return rowLabel(for: c)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Category *")
                 .font(.subheadline)
 
-            Menu {
-                ForEach(categories) { category in
-                    Button(category.name) {
-                        selectedCategory = category
+            HStack {
+                Menu {
+                    Button {
+                        selectedCategory = nil
+                    } label: {
+                        HStack {
+                            Text("Select a category")
+                            Spacer()
+                            if selectedCategory == nil {
+                                Image(systemName: "checkmark")
+                            }
+                        }
                     }
                     Divider()
                     ForEach(categories) { category in
@@ -266,22 +292,11 @@ private struct CategoryPicker: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                 }
-            } label: {
-                HStack {
-                    Text(selectedCategory?.name ?? "Select a category")
-                        .foregroundStyle(selectedCategory == nil ? .secondary : .primary)
-                    Spacer()
-                    Image(systemName: "chevron.down")
-                        .foregroundStyle(.secondary)
-                }
-                .padding()
-                .background(Color("CardBackground"))
-                .cornerRadius(12)
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                .menuActionDismissBehavior(.automatic)
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white)
+            .background(Color("CardBackground"))
             .cornerRadius(12)
             .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
         }
@@ -313,6 +328,9 @@ private struct DateField: View {
 
 private struct NoteField: View {
     @Binding var note: String
+    var focusedField: FocusState<ExpenseFormField?>.Binding
+    var field: ExpenseFormField
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Note (optional)")
