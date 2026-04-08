@@ -15,9 +15,11 @@ struct DashboardView: View {
                     VStack {
                         BudgetDonutChartView(
                             summaries: viewModel.categorySummaries,
-                            totalSpent: viewModel.totalSpent
+                            totalBudget: viewModel.totalBudget,
+                            totalSpent: viewModel.totalSpent,
+                            safeToSpend: viewModel.safeToSpend
                         )
-                        .frame(height: 280)
+                        .frame(height: 320)
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -107,8 +109,8 @@ private struct CategoriesSection: View {
                     .padding(.vertical, 8)
             } else {
                 VStack(spacing: 12) {
-                    ForEach(summaries) { summary in
-                        CategorySummaryRow(summary: summary)
+                    ForEach(Array(summaries.enumerated()), id: \.element.id) { index, summary in
+                        CategorySummaryRow(summary: summary, paletteIndex: index)
                     }
                 }
             }
@@ -118,7 +120,8 @@ private struct CategoriesSection: View {
 
 private struct CategorySummaryRow: View {
     let summary: CategorySummary
-    
+    let paletteIndex: Int
+
     private var remainingText: String {
         String(format: "$%.2f left", summary.left)
     }
@@ -153,7 +156,7 @@ private struct CategorySummaryRow: View {
                         .frame(height: 6)
                     
                     Capsule()
-                        .fill(Color("OliveGreen"))
+                        .fill(CategoryBudgetColors.displayColor(for: summary, paletteIndex: paletteIndex))
                         .frame(width: geometry.size.width * progress, height: 6)
                 }
             }

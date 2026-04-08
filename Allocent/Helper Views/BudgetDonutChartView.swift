@@ -1,30 +1,79 @@
 import SwiftUI
 import Charts
 
+private struct DonutSlice: Identifiable {
+    let id: String
+    let value: Double
+    let color: Color
+}
+
 struct BudgetDonutChartView: View {
     let summaries: [CategorySummary]
+    let totalBudget: Double
     let totalSpent: Double
+    let safeToSpend: Double
 
-    private var monthLabel: String {
+    private var asOfDateLabel: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM"
+        formatter.dateFormat = "MMM d, yyyy"
         return formatter.string(from: Date())
     }
 
-    private var slices: [(summary: CategorySummary, amount: Double, color: Color)] {
-        let positive = summaries
-            .filter { $0.spent > 0 }
-            .sorted { $0.name < $1.name }
-        let indexed = summaries.sorted { $0.name < $1.name }
-        if totalSpent > 0 {
-            return positive.map { s in
-                let idx = indexed.firstIndex(where: { $0.id == s.id }) ?? 0
-                return (s, s.spent, resolvedColor(for: s, indexInAll: idx))
-            }
+    /// Ring fills 100% of the circle: under budget = spent segments + remainder; over budget = spent only (normalized to full circle, capped).
+    private var slices: [DonutSlice] {
+        let sorted = summaries.sorted { $0.name < $1.name }
+        let indexed = Array(sorted.enumerated())
+
+        if totalBudget <= 0 {
+            if totalSpent <= 0 { return [] }
+            return spendingOnlySlices(indexed: indexed)
         }
-        return []
+
+        if totalSpent <= totalBudget {
+            var result: [DonutSlice] = []
+            for (idx, s) in indexed {
+                guard s.spent > 0 else { continue }
+                result.append(
+                    DonutSlice(
+                        id: s.id,
+                        value: s.spent,
+                        color: resolvedColor(for: s, indexInAll: idx)
+                    )
+                )
+            }
+            let remaining = max(totalBudget - totalSpent, 0)
+            if remaining > 0.0001 {
+                result.append(
+                    DonutSlice(
+                        id: "remaining",
+                        value: remaining,
+                        color: Color.gray.opacity(0.22)
+                    )
+                )
+            }
+            return result
+        }
+
+        // Over budget: cap ring at 100% — show category shares of total spent (full circle).
+        return spendingOnlySlices(indexed: indexed)
     }
 
+    private func spendingOnlySlices(
+        indexed: [(offset: Int, element: CategorySummary)]
+    ) -> [DonutSlice] {
+        let withSpend = indexed.filter { $0.element.spent > 0 }
+        guard !withSpend.isEmpty else { return [] }
+        return withSpend.map { pair in
+            let s = pair.element
+            return DonutSlice(
+                id: s.id,
+                value: s.spent,
+                color: resolvedColor(for: s, indexInAll: pair.offset)
+            )
+        }
+    }
+
+    /// Donut uses category hex when set; otherwise the standard fallback palette (not tied to row styling / over-budget red).
     private func resolvedColor(for summary: CategorySummary, indexInAll: Int) -> Color {
         if let hex = summary.colorHex, let c = Color(hex: hex) {
             return c
@@ -37,35 +86,38 @@ struct BudgetDonutChartView: View {
         ZStack {
             if slices.isEmpty {
                 Circle()
-                    .stroke(Color("OliveGreen").opacity(0.28), lineWidth: 28)
-                    .frame(width: 220, height: 220)
+                    .stroke(Color("OliveGreen").opacity(0.28), lineWidth: 20)
+                    .frame(width: 280, height: 280)
             } else {
-                Chart(slices, id: \.summary.id) { item in
+                Chart(slices) { item in
                     SectorMark(
-                        angle: .value("Spent", item.amount),
-                        innerRadius: .ratio(0.65),
-                        angularInset: 2
+                        angle: .value("Budget", item.value),
+                        innerRadius: .ratio(0.78),
+                        angularInset: 1.5
                     )
                     .foregroundStyle(item.color)
                 }
                 .chartLegend(.hidden)
-                .frame(width: 250, height: 250)
+                .frame(width: 300, height: 300)
             }
 
             VStack(spacing: 4) {
-                Text("We spent")
+                Text("Safe to spend")
                     .font(.subheadline)
                     .foregroundColor(.gray)
-                Text(formatCurrencyTwoDecimals(totalSpent))
+                Text(formatCurrencyTwoDecimals(safeToSpend))
                     .font(.system(size: 34, weight: .bold))
                     .foregroundColor(.black)
-                Text(monthLabel)
-                    .font(.subheadline)
+                    .minimumScaleFactor(0.85)
+                    .lineLimit(1)
+                Text("as of \(asOfDateLabel)")
+                    .font(.caption)
                     .foregroundColor(.gray)
             }
+            .padding(.horizontal, 20)
             .multilineTextAlignment(.center)
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("We spent \(formatCurrencyTwoDecimals(totalSpent)) in \(monthLabel)")
+            .accessibilityLabel("Safe to spend \(formatCurrencyTwoDecimals(safeToSpend)) as of \(asOfDateLabel)")
         }
     }
 
