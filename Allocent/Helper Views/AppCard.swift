@@ -19,7 +19,7 @@ struct AppCard<Content: View>: View {
             content
         }
         .padding()
-        .background(Color.white)
+        .background(Color("CardBackground"))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
     }

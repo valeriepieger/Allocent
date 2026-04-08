@@ -33,72 +33,72 @@ struct SignUpView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("First Name")
                                 .font(.footnote)
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.secondary)
 
                             TextField("First name", text: $vm.form.firstName)
                                 .textInputAutocapitalization(.words)
                                 .padding()
-                                .background(Color.white)
+                                .background(Color("CardBackground"))
                                 .cornerRadius(16)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Last Name")
                                 .font(.footnote)
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.secondary)
 
                             TextField("Last name", text: $vm.form.lastName)
                                 .textInputAutocapitalization(.words)
                                 .padding()
-                                .background(Color.white)
+                                .background(Color("CardBackground"))
                                 .cornerRadius(16)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Email")
                                 .font(.footnote)
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.secondary)
 
                             TextField("Insert email", text: $vm.form.email)
                                 .textInputAutocapitalization(.never)
                                 .keyboardType(.emailAddress)
                                 .autocorrectionDisabled()
                                 .padding()
-                                .background(Color.white)
+                                .background(Color("CardBackground"))
                                 .cornerRadius(16)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Bio")
                                 .font(.footnote)
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.secondary)
 
                             TextField("Optional", text: $vm.form.bio, axis: .vertical)
                                 .lineLimit(3, reservesSpace: true)
                                 .padding()
-                                .background(Color.white)
+                                .background(Color("CardBackground"))
                                 .cornerRadius(16)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Password")
                                 .font(.footnote)
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.secondary)
 
                             SecureField("Password", text: $vm.form.password)
                                 .padding()
-                                .background(Color.white)
+                                .background(Color("CardBackground"))
                                 .cornerRadius(16)
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Confirm Password")
                                 .font(.footnote)
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.secondary)
 
                             SecureField("Confirm password", text: $vm.form.confirmPassword)
                                 .padding()
-                                .background(Color.white)
+                                .background(Color("CardBackground"))
                                 .cornerRadius(16)
                         }
 
@@ -114,10 +114,10 @@ struct SignUpView: View {
                         } label: {
                             Text(vm.isLoading ? "Creating..." : "Create Account")
                                 .font(.headline)
-                                .foregroundColor(.white)
+                                .foregroundStyle(Color("PrimaryButtonText"))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 56)
-                                .background(Color.black)
+                                .background(Color("PrimaryButton"))
                                 .cornerRadius(16)
                         }
                         .disabled(vm.isLoading)
@@ -127,7 +127,7 @@ struct SignUpView: View {
 
                     HStack(spacing: 4) {
                         Text("Already have an account?")
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                         NavigationLink("Sign In") {
                             SignInView(session: session)
                         }

@@ -28,17 +28,17 @@ struct EditCategoriesView: View {
                 VStack(spacing: 16) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Left to Budget")
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                         Text("$\(viewModel.leftToBudget, specifier: "%.2f")")
                             .font(.title)
                             .fontWeight(.bold)
                         Text(viewModel.allocationPercentText)
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white)
+                    .background(Color("CardBackground"))
                     .cornerRadius(12)
                     .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
                     
@@ -63,7 +63,7 @@ struct EditCategoriesView: View {
                             .foregroundColor(.gray)
                     }
                     .padding()
-                    .background(Color.white)
+                    .background(Color("CardBackground"))
                     .cornerRadius(12)
                     .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
                     
@@ -91,7 +91,7 @@ struct EditCategoriesView: View {
                         if viewModel.categories.isEmpty {
                             Text("No categories yet. Tap Add to create one.")
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundStyle(.secondary)
                                 .padding(.vertical, 24)
                                 .frame(maxWidth: .infinity)
                         } else {
@@ -266,7 +266,7 @@ private struct EditCategoryRow: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(Color("CardBackground"))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
         .onAppear {
@@ -348,7 +348,7 @@ private struct AddCategorySheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Category name")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                         TextField("e.g. Food, Bills", text: $name)
                             .textFieldStyle(.roundedBorder)
                             .textInputAutocapitalization(.words)

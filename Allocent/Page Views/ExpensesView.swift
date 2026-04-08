@@ -24,25 +24,57 @@ struct ExpensesView: View {
     @State private var categories: [BudgetCategory] = []
     @State private var isSaving: Bool = false
     @State private var errorMessage: String?
-    
+    @State private var showScanReceipt = false
+
     private var isFormValid: Bool {
         guard Double(amountText) ?? 0 > 0 else { return false }
         return selectedCategory != nil
     }
-    
+
     var body: some View {
         ZStack {
             Color("Background").ignoresSafeArea()
-            
+
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
                     Header(categoryName: "Add Expense")
-                    
+
                     Text("Track your spending")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal)
-                    
+
+                    // Scan Receipt Button
+                    Button {
+                        showScanReceipt = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "camera")
+                            Text("Scan Receipt")
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundStyle(Color("PrimaryButtonText"))
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color("OliveGreen"))
+                        .cornerRadius(12)
+                    }
+                    .padding(.horizontal)
+
+                    // Divider with "or enter manually" label
+                    HStack {
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundStyle(.secondary.opacity(0.3))
+                        Text("or enter manually")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundStyle(.secondary.opacity(0.3))
+                    }
+                    .padding(.horizontal)
+
                     VStack(spacing: 20) {
                         AmountField(
                             amountText: $amountText,
@@ -61,14 +93,14 @@ struct ExpensesView: View {
                         )
                     }
                     .padding(.horizontal)
-                    
+
                     if let errorMessage = errorMessage {
                         Text(errorMessage)
                             .font(.footnote)
                             .foregroundColor(.red)
                             .padding(.horizontal)
                     }
-                    
+
                     Button(action: saveExpense) {
                         HStack {
                             if isSaving {
@@ -77,10 +109,10 @@ struct ExpensesView: View {
                             Text("Add Expense")
                                 .fontWeight(.semibold)
                         }
-                        .foregroundColor(.white)
+                        .foregroundStyle(Color("PrimaryButtonText"))
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(isFormValid ? Color.black : Color.gray.opacity(0.6))
+                        .background(isFormValid ? Color("PrimaryButton") : Color("PrimaryButton").opacity(0.4))
                         .cornerRadius(12)
                     }
                     .disabled(!isFormValid || isSaving)
@@ -92,11 +124,14 @@ struct ExpensesView: View {
             .scrollDismissesKeyboard(.interactively)
         }
         .onAppear(perform: loadCategories)
+        .sheet(isPresented: $showScanReceipt) {
+            ScanReceiptView()
+        }
     }
-    
+
     private func loadCategories() {
         guard let uid = Auth.auth().currentUser?.uid else { return }
-        
+
         let db = Firestore.firestore()
         db.collection("users")
             .document(uid)
@@ -106,9 +141,9 @@ struct ExpensesView: View {
                     errorMessage = error.localizedDescription
                     return
                 }
-                
+
                 guard let documents = snapshot?.documents else { return }
-                
+
                 let fetched: [BudgetCategory] = documents.map { doc in
                     let data = doc.data()
                     return BudgetCategory(
@@ -119,7 +154,7 @@ struct ExpensesView: View {
                         limitPercent: optionalFirestoreDouble(data["limitPercent"])
                     )
                 }
-                
+
                 DispatchQueue.main.async {
                     categories = fetched
                     if let current = selectedCategory,
@@ -132,16 +167,14 @@ struct ExpensesView: View {
                 }
             }
     }
-    
+
     private func saveExpense() {
         guard let category = selectedCategory,
               let amount = Double(amountText),
               amount > 0 else { return }
-        
+
         isSaving = true
         errorMessage = nil
-        focusedField = nil
-        
         Task {
             do {
                 try await ExpenseService.addExpense(
@@ -170,23 +203,27 @@ struct ExpensesView: View {
 
 private struct AmountField: View {
     @Binding var amountText: String
+<<<<<<< HEAD
     var focusedField: FocusState<ExpenseFormField?>.Binding
     var field: ExpenseFormField
     
+=======
+
+>>>>>>> main
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Amount *")
                 .font(.subheadline)
-            
+
             HStack {
                 Text("$")
-                    .foregroundColor(.gray)
+                    .foregroundStyle(.secondary)
                 TextField("0.00", text: $amountText)
                     .keyboardType(.decimalPad)
                     .focused(focusedField, equals: field)
             }
             .padding()
-            .background(Color.white)
+            .background(Color("CardBackground"))
             .cornerRadius(12)
             .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
         }
@@ -196,37 +233,15 @@ private struct AmountField: View {
 private struct CategoryPicker: View {
     var categories: [BudgetCategory]
     @Binding var selectedCategory: BudgetCategory?
-    
-    private func rowLabel(for category: BudgetCategory) -> String {
-        let base = category.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        if base.isEmpty {
-            return "Unnamed category"
-        }
-        return base
-    }
-    
-    private var selectionTitle: String {
-        guard let c = selectedCategory else { return "Select a category" }
-        return rowLabel(for: c)
-    }
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Category *")
                 .font(.subheadline)
-            
-            HStack {
-                Menu {
-                    Button {
-                        selectedCategory = nil
-                    } label: {
-                        HStack {
-                            Text("Select a category")
-                            Spacer()
-                            if selectedCategory == nil {
-                                Image(systemName: "checkmark")
-                            }
-                        }
+
+            Menu {
+                ForEach(categories) { category in
+                    Button(category.name) {
+                        selectedCategory = category
                     }
                     Divider()
                     ForEach(categories) { category in
@@ -258,7 +273,18 @@ private struct CategoryPicker: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                 }
-                .menuActionDismissBehavior(.automatic)
+            } label: {
+                HStack {
+                    Text(selectedCategory?.name ?? "Select a category")
+                        .foregroundStyle(selectedCategory == nil ? .secondary : .primary)
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .foregroundStyle(.secondary)
+                }
+                .padding()
+                .background(Color("CardBackground"))
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -271,12 +297,12 @@ private struct CategoryPicker: View {
 
 private struct DateField: View {
     @Binding var selectedDate: Date
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Date *")
                 .font(.subheadline)
-            
+
             DatePicker(
                 "",
                 selection: $selectedDate,
@@ -285,7 +311,7 @@ private struct DateField: View {
             .datePickerStyle(.compact)
             .labelsHidden()
             .padding()
-            .background(Color.white)
+            .background(Color("CardBackground"))
             .cornerRadius(12)
             .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
         }
@@ -294,19 +320,16 @@ private struct DateField: View {
 
 private struct NoteField: View {
     @Binding var note: String
-    var focusedField: FocusState<ExpenseFormField?>.Binding
-    var field: ExpenseFormField
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Note (optional)")
                 .font(.subheadline)
-            
+
             TextField("e.g., Lunch with friends", text: $note, axis: .vertical)
                 .focused(focusedField, equals: field)
                 .lineLimit(1...3)
                 .padding()
-                .background(Color.white)
+                .background(Color("CardBackground"))
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
         }

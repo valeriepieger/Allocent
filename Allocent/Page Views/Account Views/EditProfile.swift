@@ -31,7 +31,7 @@ struct EditProfile: View {
                                 .overlay(
                                     Image(systemName: "person")
                                         .font(.system(size: 36))
-                                        .foregroundColor(Color("OliveGreen").opacity(Double(10.0)))
+                                        .foregroundStyle(Color("OliveGreen"))
                                 )
                             
                             //Camera Button
@@ -114,7 +114,7 @@ struct FormField: View {
             TextField(placeholder, text: $text)
                 .keyboardType(keyboardType)
                 .padding()
-                .background(Color.white)
+                .background(Color("CardBackground"))
                 .cornerRadius(16)
         }
     }

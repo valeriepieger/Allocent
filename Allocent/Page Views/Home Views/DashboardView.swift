@@ -21,7 +21,7 @@ struct DashboardView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.white)
+                    .background(Color("CardBackground"))
                     .cornerRadius(20)
                     .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
                     
@@ -64,19 +64,18 @@ private struct IncomeSummaryCard: View {
             
             Text("Total Monthly Income")
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundStyle(.secondary)
             
             Text("$\(totalMonthlyIncome, specifier: "%.2f")")
                 .font(.system(size: 28, weight: .bold))
-                .foregroundColor(.black)
             
             Text("From your income sources")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundStyle(.secondary)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
+        .background(Color("CardBackground"))
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
     }
@@ -104,7 +103,7 @@ private struct CategoriesSection: View {
             if summaries.isEmpty {
                 Text("Add categories to start tracking your spending.")
                     .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .foregroundStyle(.secondary)
                     .padding(.vertical, 8)
             } else {
                 VStack(spacing: 12) {
@@ -145,7 +144,7 @@ private struct CategorySummaryRow: View {
             
             Text(spentText)
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundStyle(.secondary)
             
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
@@ -161,7 +160,7 @@ private struct CategorySummaryRow: View {
             .frame(height: 6)
         }
         .padding()
-        .background(Color.white)
+        .background(Color("CardBackground"))
         .cornerRadius(14)
         .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
     }

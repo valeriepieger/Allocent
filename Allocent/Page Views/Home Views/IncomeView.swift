@@ -23,14 +23,13 @@ struct IncomeView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Total Monthly Income")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                         Text("$\(viewModel.totalMonthlyIncome, specifier: "%.2f")")
                             .font(.system(size: 36, weight: .bold))
-                            .foregroundColor(.black)
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white)
+                    .background(Color("CardBackground"))
                     .cornerRadius(12)
                     .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
                     
@@ -60,10 +59,10 @@ struct IncomeView: View {
                     if viewModel.incomeSources.isEmpty {
                         Text("No income sources yet. Tap Add Income to get started.")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                             .padding()
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.white)
+                            .background(Color("CardBackground"))
                             .cornerRadius(12)
                             .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
                     } else {
@@ -76,7 +75,7 @@ struct IncomeView: View {
                                         if let date = source.dateAdded {
                                             Text(formatDate(date))
                                                 .font(.caption)
-                                                .foregroundColor(.gray)
+                                                .foregroundStyle(.secondary)
                                         }
                                     }
                                     Spacer()
@@ -92,7 +91,7 @@ struct IncomeView: View {
                                     .padding(.leading, 8)
                                 }
                                 .padding()
-                                .background(Color.white)
+                                .background(Color("CardBackground"))
                                 .cornerRadius(12)
                                 .shadow(color: Color.black.opacity(0.08), radius: 5, x: 0, y: 2)
                             }
@@ -156,7 +155,7 @@ private struct AddIncomeSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Source name")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                         TextField("e.g. Salary", text: $name)
                             .textFieldStyle(.roundedBorder)
                             .textInputAutocapitalization(.words)
@@ -166,7 +165,7 @@ private struct AddIncomeSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Monthly amount")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(.secondary)
                         HStack {
                             Text("$")
                             TextField("0.00", text: $amountText)
