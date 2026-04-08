@@ -310,14 +310,17 @@ private struct DateField: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Date *")
                 .font(.subheadline)
-
-            DatePicker(
-                "",
-                selection: $selectedDate,
-                displayedComponents: .date
-            )
-            .datePickerStyle(.compact)
-            .labelsHidden()
+            
+            HStack {
+                DatePicker(
+                    "",
+                    selection: $selectedDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                Spacer()
+            }
             .padding()
             .background(Color("CardBackground"))
             .cornerRadius(12)

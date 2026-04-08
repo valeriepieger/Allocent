@@ -2,9 +2,8 @@
 //  TransactionService.swift
 //  Allocent
 //
-//  Created by Amber Liu on 4/7/26.
+//  Created by Amber Liu on 4/2/26.
 //
-
 
 import Foundation
 import FirebaseFirestore
@@ -12,26 +11,29 @@ import FirebaseAuth
 
 struct TransactionService {
 
-    private static func collection() throws -> CollectionReference {
+    private static func expensesCollection() throws -> CollectionReference {
         guard let uid = Auth.auth().currentUser?.uid else {
             throw TransactionServiceError.notAuthenticated
         }
         return Firestore.firestore()
             .collection("users")
             .document(uid)
-            .collection("transactions")
+            .collection("expenses")
     }
 
+    /// Save a scanned receipt as an expense document
     static func add(_ transaction: Transaction) async throws {
-        try await collection().addDocument(data: transaction.firestoreData)
+        try await expensesCollection().addDocument(data: transaction.toExpenseData())
     }
 
+    /// Delete an expense by ID
     static func delete(_ transaction: Transaction) async throws {
-        try await collection().document(transaction.id).delete()
+        try await expensesCollection().document(transaction.id).delete()
     }
 
+    /// Fetch all expenses as Transactions for the list view
     static func fetch() async throws -> [Transaction] {
-        let snapshot = try await collection()
+        let snapshot = try await expensesCollection()
             .order(by: "date", descending: true)
             .getDocuments()
         return snapshot.documents.compactMap { Transaction.from($0) }

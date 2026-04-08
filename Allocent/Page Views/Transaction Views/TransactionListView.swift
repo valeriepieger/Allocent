@@ -90,6 +90,12 @@ struct TransactionListView: View {
         .task {
             await loadTransactions()
         }
+        .onAppear {
+            Task {
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+                await loadTransactions()
+            }
+        }
     }
 
     // Subviews

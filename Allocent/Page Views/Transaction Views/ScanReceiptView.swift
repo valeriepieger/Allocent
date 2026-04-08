@@ -8,6 +8,8 @@
 import SwiftUI
 import PhotosUI
 import Vision
+import FirebaseFirestore
+import FirebaseAuth
 
 enum ScanState {
     case idle
@@ -33,7 +35,7 @@ struct ScanReceiptView: View {
                 case .processing:
                     processingView
                 case .confirming(let transaction):
-                    ConfirmTransactionView(transaction: transaction) {
+                    ConfirmReceiptView(transaction: transaction) {
                         dismiss()
                     } onRetry: {
                         scanState = .idle
@@ -67,7 +69,7 @@ struct ScanReceiptView: View {
         }
     }
 
-    // Subviews
+    // MARK: - Subviews
 
     private var idleView: some View {
         VStack(spacing: 32) {
@@ -112,7 +114,7 @@ struct ScanReceiptView: View {
             ProgressView().scaleEffect(1.5)
             Text("Reading receipt...")
                 .font(.headline)
-            Text("Parsing your receipt.")
+            Text("Parsing your receipt with Claude.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -140,7 +142,7 @@ struct ScanReceiptView: View {
         }
     }
 
-    // OCR
+    // MARK: - OCR
 
     private func recognizeText(from image: CGImage) async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
@@ -165,7 +167,7 @@ struct ScanReceiptView: View {
         }
     }
 
-    // Parsing via Anthropic API
+    // MARK: - Parsing
 
     private func parseText(_ rawText: String) async {
         scanState = .processing
@@ -198,11 +200,14 @@ struct ScanReceiptView: View {
     }
 }
 
-// Confirm Transaction View
+// MARK: - Confirm Receipt View
 
-struct ConfirmTransactionView: View {
+struct ConfirmReceiptView: View {
     @State var transaction: Transaction
+    @State private var budgetCategories: [BudgetCategory] = []
+    @State private var selectedBudgetCategory: BudgetCategory?
     @State private var isSaving = false
+    @State private var isLoadingCategories = true
     @State private var errorMessage: String?
     let onConfirm: () -> Void
     let onRetry: () -> Void
@@ -220,9 +225,27 @@ struct ConfirmTransactionView: View {
                         .keyboardType(.decimalPad)
                 }
                 DatePicker("Date", selection: $transaction.date, displayedComponents: .date)
-                Picker("Category", selection: $transaction.category) {
-                    ForEach(TransactionCategory.allCases, id: \.self) { cat in
-                        Text("\(cat.emoji) \(cat.rawValue)").tag(cat)
+            }
+
+            Section("Budget Category") {
+                if isLoadingCategories {
+                    ProgressView("Loading categories...")
+                } else if budgetCategories.isEmpty {
+                    Text("No budget categories found. Add categories in Settings.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Picker("Category", selection: $selectedBudgetCategory) {
+                        ForEach(budgetCategories) { cat in
+                            Text(cat.name).tag(Optional(cat))
+                        }
+                    }
+                    .pickerStyle(.menu)
+
+                    if let selected = selectedBudgetCategory {
+                        Text("This will count toward your \(selected.name) budget.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -241,7 +264,7 @@ struct ConfirmTransactionView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .bold()
-                .disabled(isSaving)
+                .disabled(isSaving || selectedBudgetCategory == nil)
 
                 Button("Scan Again", role: .destructive) {
                     onRetry()
@@ -251,12 +274,50 @@ struct ConfirmTransactionView: View {
         }
         .navigationTitle("Confirm Receipt")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await loadBudgetCategories()
+        }
+    }
+
+    private func loadBudgetCategories() async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        do {
+            let snapshot = try await Firestore.firestore()
+                .collection("users")
+                .document(uid)
+                .collection("categories")
+                .getDocuments()
+
+            let fetched: [BudgetCategory] = snapshot.documents.map { doc in
+                let data = doc.data()
+                return BudgetCategory(
+                    id: doc.documentID,
+                    name: data["name"] as? String ?? "",
+                    limit: data["limit"] as? Double ?? 0,
+                    colorHex: data["colorHex"] as? String
+                )
+            }
+
+            await MainActor.run {
+                budgetCategories = fetched
+                // Auto-map based on TransactionCategory keyword matching
+                selectedBudgetCategory = transaction.category.bestMatch(in: fetched) ?? fetched.first
+                isLoadingCategories = false
+            }
+        } catch {
+            await MainActor.run {
+                isLoadingCategories = false
+            }
+        }
     }
 
     private func save() async {
+        guard let budgetCategory = selectedBudgetCategory else { return }
         isSaving = true
+        var t = transaction
+        t.categoryId = budgetCategory.id
         do {
-            try await TransactionService.add(transaction)
+            try await TransactionService.add(t)
             onConfirm()
         } catch {
             errorMessage = error.localizedDescription
