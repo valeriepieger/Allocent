@@ -19,7 +19,8 @@ final class OnboardingViewModel: ObservableObject {
         case welcome = 0
         case income = 1
         case bankLink = 2
-        case completion = 3
+        case budgetCategories = 3
+        case completion = 4
     }
 
     @Published var currentStep: Step = .welcome
@@ -29,6 +30,27 @@ final class OnboardingViewModel: ObservableObject {
     @Published var newIncomeName: String = ""
     @Published var newIncomeAmount: Double?
 
+
+    // Category budget allocations keyed by TransactionCategory
+    @Published var categoryAllocations: [TransactionCategory: Double] = {
+        var defaults: [TransactionCategory: Double] = [:]
+        for category in TransactionCategory.allCases {
+            defaults[category] = 0
+        }
+        return defaults
+    }()
+
+    var totalAllocated: Double {
+        categoryAllocations.values.reduce(0, +)
+    }
+
+    var isOverAllocated: Bool {
+        totalAllocated > totalIncome
+    }
+
+    func updateAllocation(for category: TransactionCategory, amount: Double) {
+        categoryAllocations[category] = max(amount, 0)
+    }
 
     @Published var isSaving: Bool = false
     @Published var errorMessage: String?
@@ -52,6 +74,10 @@ final class OnboardingViewModel: ObservableObject {
     var canAddIncome: Bool {
         let trimmed = newIncomeName.trimmingCharacters(in: .whitespaces)
         return !trimmed.isEmpty && (newIncomeAmount ?? 0) > 0
+    }
+
+    var isBudgetFullyAllocated: Bool {
+        totalIncome > 0 && totalAllocated == totalIncome
     }
 
     var stepCount: Int {
@@ -112,12 +138,13 @@ final class OnboardingViewModel: ObservableObject {
                 ], forDocument: ref)
             }
 
-            //write hardcoded categories from TransactionCategory
+            //write categories with user-set budget allocations
             for category in TransactionCategory.allCases {
                 let ref = userRef.collection("categories").document()
+                let limit = categoryAllocations[category] ?? 0
                 batch.setData([
                     "name": category.rawValue,
-                    "limit": 0.0
+                    "limit": limit
                 ], forDocument: ref)
             }
 

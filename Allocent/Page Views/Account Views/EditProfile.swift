@@ -10,11 +10,23 @@ import SwiftUI
 struct EditProfile: View {
     
     @Environment(\.dismiss) private var dismiss
-    @State private var firstName: String = "Example"
-    @State private var lastName: String = "Example"
-    @State private var email: String = "example@example.com"
+    @EnvironmentObject var session: SessionViewModel
     @State private var phoneNumber: String = ""
     @State private var bio: String = ""
+    
+    //get the user info to display
+    private var currentUser: AppUser? {
+        switch session.state {
+        case .active(let user), .onboarding(let user):
+            return user
+        default:
+            return nil
+        }
+    }
+
+    @State private var displayFirstName: String = ""
+    @State private var displayLastName: String = ""
+    @State private var displayEmail: String = ""
     
     var body: some View {
         ZStack {
@@ -59,9 +71,9 @@ struct EditProfile: View {
                     .frame(maxWidth: .infinity)
                     
                     VStack(spacing: 16) {
-                        FormField(label: "First Name", text: $firstName)
-                        FormField(label: "Last Name", text: $lastName)
-                        FormField(label: "Email", text: $email, keyboardType: .emailAddress)
+                        FormField(label: "First Name", text: $displayFirstName)
+                        FormField(label: "Last Name", text: $displayLastName)
+                        FormField(label: "Email", text: $displayEmail, keyboardType: .emailAddress)
                         FormField(label: "Phone Number", text: $phoneNumber, placeholder: "(555) 123-4567", keyboardType: .phonePad)
                         
                     }
@@ -95,6 +107,11 @@ struct EditProfile: View {
                 .padding(.bottom, 30)
                 
             }
+        }
+        .onAppear {
+            displayFirstName = currentUser?.firstName ?? ""
+            displayLastName = currentUser?.lastName ?? ""
+            displayEmail = currentUser?.email ?? ""
         }
     }
 }

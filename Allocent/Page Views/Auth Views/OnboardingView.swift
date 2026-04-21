@@ -35,6 +35,8 @@ struct OnboardingView: View {
                         OnboardingIncomeStep()
                     case .bankLink:
                         OnboardingBankLinkStep()
+                    case .budgetCategories:
+                        OnboardingBudgetStep()
                     case .completion:
                         OnboardingCompletionStep(user: user)
                     }
@@ -79,9 +81,9 @@ struct OnboardingView: View {
                         subtitle: "Optionally connect accounts to track spending"
                     )
                     OnboardingBullet(
-                        icon: "checkmark.circle.fill",
-                        title: "Start tracking",
-                        subtitle: "You're ready to take control of your finances"
+                        icon: "chart.pie.fill",
+                        title: "Set category limits",
+                        subtitle: "Allocate your income across spending categories"
                     )
                 }
             }
