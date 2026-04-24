@@ -16,7 +16,24 @@ enum TransactionCategory: String, Codable, CaseIterable {
     case entertainment = "Entertainment"
     case health = "Health"
     case utilities = "Utilities"
+    case rent = "Rent"
+    case insurance = "Insurance"
     case other = "Other"
+
+    var emoji: String {
+        switch self {
+        case .food: return "🍔"
+        case .transport: return "🚗"
+        case .groceries: return "🛒"
+        case .shopping: return "🛍️"
+        case .entertainment: return "🎬"
+        case .health: return "💊"
+        case .utilities: return "💡"
+        case .rent: return "🏠"
+        case .insurance: return "🛡️"
+        case .other: return "📦"
+        }
+    }
 
     var iconName: String {
         switch self {
@@ -27,6 +44,8 @@ enum TransactionCategory: String, Codable, CaseIterable {
         case .entertainment: return "film.fill"
         case .health: return "heart.fill"
         case .utilities: return "bolt.fill"
+        case .rent: return "house.fill"
+        case .insurance: return "shield.fill"
         case .other: return "ellipsis.circle.fill"
         }
     }
@@ -40,14 +59,14 @@ enum TransactionCategory: String, Codable, CaseIterable {
         case .entertainment: return "purple"
         case .health: return "red"
         case .utilities: return "yellow"
+        case .rent: return "teal"
+        case .insurance: return "indigo"
         case .other: return "gray"
         }
     }
 
-    /// Attempts to find the best matching BudgetCategory by name
     func bestMatch(in budgetCategories: [BudgetCategory]) -> BudgetCategory? {
         let selfName = rawValue.lowercased()
-        // First try exact or contains match
         if let exact = budgetCategories.first(where: {
             $0.name.lowercased() == selfName ||
             $0.name.lowercased().contains(selfName) ||
@@ -55,7 +74,6 @@ enum TransactionCategory: String, Codable, CaseIterable {
         }) {
             return exact
         }
-        // Keyword fallback matching
         let keywords: [String] = {
             switch self {
             case .food: return ["food", "dining", "restaurant", "eat", "drink", "coffee", "lunch", "dinner"]
@@ -64,7 +82,9 @@ enum TransactionCategory: String, Codable, CaseIterable {
             case .shopping: return ["shop", "retail", "clothes", "amazon", "store"]
             case .entertainment: return ["entertainment", "fun", "movie", "music", "game", "sport", "streaming"]
             case .health: return ["health", "medical", "pharmacy", "doctor", "gym", "fitness", "wellness"]
-            case .utilities: return ["utilities", "bill", "electric", "water", "internet", "phone", "rent"]
+            case .utilities: return ["utilities", "bill", "electric", "water", "internet", "phone"]
+            case .rent: return ["rent", "lease", "landlord", "apartment", "housing"]
+            case .insurance: return ["insurance", "premium", "coverage", "policy"]
             case .other: return []
             }
         }()
@@ -74,8 +94,6 @@ enum TransactionCategory: String, Codable, CaseIterable {
     }
 }
 
-/// A transaction read from the expenses collection.
-/// Expenses now store merchant + category fields alongside amount/date/categoryId.
 struct Transaction: Identifiable {
     var id: String
     var merchant: String
@@ -103,7 +121,6 @@ struct Transaction: Identifiable {
         self.notes = notes
     }
 
-    /// Firestore data for saving a scanned receipt as an expense
     func toExpenseData() -> [String: Any] {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM"
@@ -124,7 +141,6 @@ struct Transaction: Identifiable {
         return data
     }
 
-    /// Read a Transaction back from an expense document
     static func from(_ doc: DocumentSnapshot) -> Transaction? {
         guard let data = doc.data() else { return nil }
         return Transaction(

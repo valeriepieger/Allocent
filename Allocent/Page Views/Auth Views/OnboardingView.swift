@@ -27,12 +27,14 @@ struct OnboardingView: View {
                 .padding(.top, 8)
 
                 // Step content
-                Group {
+                ZStack {
                     switch viewModel.currentStep {
                     case .welcome:
                         welcomeStep
                     case .income:
                         OnboardingIncomeStep()
+                    case .categorySelection:
+                        OnboardingCategoryStep()
                     case .budgetCategories:
                         OnboardingBudgetStep()
                     case .bankLink:
@@ -41,10 +43,12 @@ struct OnboardingView: View {
                         OnboardingCompletionStep(user: user)
                     }
                 }
+                .id(viewModel.currentStep)
                 .transition(.asymmetric(
                     insertion: .move(edge: .trailing).combined(with: .opacity),
                     removal: .move(edge: .leading).combined(with: .opacity)
                 ))
+                .animation(.easeInOut(duration: 0.3), value: viewModel.currentStep)
             }
         }
         .environmentObject(viewModel)
@@ -76,6 +80,11 @@ struct OnboardingView: View {
                         subtitle: "Tell us how much you earn each month"
                     )
                     OnboardingBullet(
+                        icon: "tag.fill",
+                        title: "Choose your categories",
+                        subtitle: "Select the spending categories that matter to you"
+                    )
+                    OnboardingBullet(
                         icon: "chart.pie.fill",
                         title: "Set category limits",
                         subtitle: "Allocate your income across spending categories"
@@ -83,7 +92,7 @@ struct OnboardingView: View {
                     OnboardingBullet(
                         icon: "building.columns.fill",
                         title: "Link your bank",
-                        subtitle: "Optionally connect Plaid to import this month’s spending"
+                        subtitle: "Optionally connect Plaid to import this month's spending"
                     )
                 }
             }

@@ -21,8 +21,15 @@ final class EditCategoriesViewModel: ObservableObject {
         categories.reduce(0) { $0 + $1.effectiveLimit(monthlyIncome: totalIncome) }
     }
     
+//    var leftToBudget: Double {
+//        max(totalIncome - totalAllocated, 0)
+//    }
     var leftToBudget: Double {
-        max(totalIncome - totalAllocated, 0)
+        totalIncome - totalAllocated
+    } // allowing negative balances, adding a warning for this though
+    
+    var isOverAllocated: Bool {
+        totalAllocated > totalIncome
     }
     
     var allocationPercentText: String {
@@ -41,7 +48,6 @@ final class EditCategoriesViewModel: ObservableObject {
         guard totalIncome > 0 else {
             return "Your total income is $0. Add income first, or set all category limits to $0."
         }
-
         let projected = projectedTotalAllocated(with: limit, replacingCategoryID: replacingCategoryID)
         let projectedPercent = (projected / totalIncome) * 100
         return String(
@@ -101,7 +107,6 @@ final class EditCategoriesViewModel: ObservableObject {
         }
     }
     
-    /// `limitPercent` when non-nil stores the share of income (0–100); limits then scale when income changes.
     func addCategory(name: String, limit: Double, limitPercent: Double?) async {
         guard let uid = uid else { return }
         
@@ -114,10 +119,19 @@ final class EditCategoriesViewModel: ObservableObject {
         }
         
         do {
+            // use name as document ID to stay in sync with visibleCategories
             try await db.collection("users")
                 .document(uid)
                 .collection("categories")
-                .addDocument(data: data)
+                .document(name)
+                .setData(data)
+            
+            // add to visibleCategories on user document
+            try await db.collection("users")
+                .document(uid)
+                .updateData([
+                    "visibleCategories": FieldValue.arrayUnion([name])
+                ])
         } catch {
             await MainActor.run {
                 errorMessage = error.localizedDescription
@@ -144,6 +158,20 @@ final class EditCategoriesViewModel: ObservableObject {
                 .collection("categories")
                 .document(id)
                 .updateData(data)
+            
+            // if name changed, update visibleCategories too
+            if id != name {
+                try await db.collection("users")
+                    .document(uid)
+                    .updateData([
+                        "visibleCategories": FieldValue.arrayRemove([id])
+                    ])
+                try await db.collection("users")
+                    .document(uid)
+                    .updateData([
+                        "visibleCategories": FieldValue.arrayUnion([name])
+                    ])
+            }
         } catch {
             await MainActor.run {
                 errorMessage = error.localizedDescription
@@ -160,6 +188,13 @@ final class EditCategoriesViewModel: ObservableObject {
                 .collection("categories")
                 .document(id)
                 .delete()
+            
+            // remove from visibleCategories on user document
+            try await db.collection("users")
+                .document(uid)
+                .updateData([
+                    "visibleCategories": FieldValue.arrayRemove([id])
+                ])
         } catch {
             await MainActor.run {
                 errorMessage = error.localizedDescription
@@ -184,11 +219,9 @@ final class EditCategoriesViewModel: ObservableObject {
         guard let replacingCategoryID else {
             return totalAllocated + limit
         }
-
         guard let existing = categories.first(where: { $0.id == replacingCategoryID }) else {
             return totalAllocated + limit
         }
-
         let current = existing.effectiveLimit(monthlyIncome: totalIncome)
         return max(totalAllocated - current, 0) + limit
     }

@@ -6,79 +6,89 @@ import Combine
 
 final class DashboardViewModel: ObservableObject {
     @Published var categorySummaries: [CategorySummary] = []
-    /// Sum of category limits (allocated budget).
     @Published var totalBudget: Double = 0
     @Published var totalMonthlyIncome: Double = 0
     @Published var totalSpent: Double = 0
     @Published var safeToSpend: Double = 0
-    
+
     private let db = Firestore.firestore()
     private var listeners: [ListenerRegistration] = []
-    
+    private var visibleCategories: Set<String> = []
+
     private var uid: String? {
         Auth.auth().currentUser?.uid
     }
-    
+
     private var currentMonth: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM"
         return formatter.string(from: Date())
     }
-    
+
     private var lastCategoriesSnapshot: QuerySnapshot?
     private var lastExpensesSnapshot: QuerySnapshot?
     private var lastIncomeSnapshot: QuerySnapshot?
-    
+
     deinit {
         listeners.forEach { $0.remove() }
     }
-    
+
     func startListening() {
         guard let uid = uid else { return }
-        
+
+        // listen to user document for visibleCategories changes in real time
+        let userListener = db.collection("users").document(uid)
+            .addSnapshotListener { [weak self] snapshot, _ in
+                guard let self = self else { return }
+
+                if let data = snapshot?.data(),
+                   let visible = data["visibleCategories"] as? [String] {
+                    self.visibleCategories = Set(visible)
+                } else {
+                    self.visibleCategories = []
+                }
+
+                // recompute whenever visibleCategories changes
+                self.recompute(categoriesSnapshot: nil, expensesSnapshot: nil, incomeSnapshot: nil)
+            }
+
         let categoriesRef = db.collection("users")
             .document(uid)
             .collection("categories")
-        
+
         let expensesRef = db.collection("users")
             .document(uid)
             .collection("expenses")
             .whereField("month", isEqualTo: currentMonth)
-        
+
         let incomeRef = db.collection("users")
             .document(uid)
             .collection("income_sources")
-        
+
         let catListener = categoriesRef.addSnapshotListener { [weak self] snapshot, _ in
             self?.recompute(categoriesSnapshot: snapshot, expensesSnapshot: nil, incomeSnapshot: nil)
         }
-        
+
         let expListener = expensesRef.addSnapshotListener { [weak self] snapshot, _ in
             self?.recompute(categoriesSnapshot: nil, expensesSnapshot: snapshot, incomeSnapshot: nil)
         }
-        
+
         let incomeListener = incomeRef.addSnapshotListener { [weak self] snapshot, _ in
             self?.recompute(categoriesSnapshot: nil, expensesSnapshot: nil, incomeSnapshot: snapshot)
         }
-        
-        listeners = [catListener, expListener, incomeListener]
+
+        listeners = [userListener, catListener, expListener, incomeListener]
     }
-    
+
     private func recompute(categoriesSnapshot: QuerySnapshot?, expensesSnapshot: QuerySnapshot?, incomeSnapshot: QuerySnapshot?) {
-        if let categoriesSnapshot = categoriesSnapshot {
-            lastCategoriesSnapshot = categoriesSnapshot
-        }
-        if let expensesSnapshot = expensesSnapshot {
-            lastExpensesSnapshot = expensesSnapshot
-        }
-        if let incomeSnapshot = incomeSnapshot {
-            lastIncomeSnapshot = incomeSnapshot
-        }
-        
+        if let categoriesSnapshot = categoriesSnapshot { lastCategoriesSnapshot = categoriesSnapshot }
+        if let expensesSnapshot = expensesSnapshot { lastExpensesSnapshot = expensesSnapshot }
+        if let incomeSnapshot = incomeSnapshot { lastIncomeSnapshot = incomeSnapshot }
+
         var totalMonthlyIncome = 0.0
         if let incSnap = lastIncomeSnapshot {
             for doc in incSnap.documents {
-                totalMonthlyIncome += Self.double(fromFirestore: doc.data()["amount"])
+                totalMonthlyIncome += doubleFromFirestore(doc.data()["amount"])
             }
         }
 
@@ -96,49 +106,47 @@ final class DashboardViewModel: ObservableObject {
             let category = BudgetCategory(
                 id: doc.documentID,
                 name: data["name"] as? String ?? "",
-                limit: Self.double(fromFirestore: data["limit"]),
+                limit: doubleFromFirestore(data["limit"]),
                 colorHex: data["colorHex"] as? String,
-                limitPercent: Self.optionalDouble(data["limitPercent"])
+                limitPercent: optionalDoubleFromFirestore(data["limitPercent"])
             )
             categories[category.id] = category
         }
-        
+
         var spentByCategory: [String: Double] = [:]
         if let expSnap = lastExpensesSnapshot {
             for doc in expSnap.documents {
                 let data = doc.data()
                 let categoryId = data["categoryId"] as? String ?? ""
-                let amount = Self.double(fromFirestore: data["amount"])
+                let amount = doubleFromFirestore(data["amount"])
                 spentByCategory[categoryId, default: 0] += amount
             }
         }
-        
+
         var summaries: [CategorySummary] = []
         var totalBudget = 0.0
         var totalSpent = 0.0
-        
+
         for category in categories.values {
+            guard visibleCategories.isEmpty || visibleCategories.contains(category.name) else { continue }
+
             let spent = spentByCategory[category.id, default: 0]
             let cap = category.effectiveLimit(monthlyIncome: totalMonthlyIncome)
-            summaries.append(
-                CategorySummary(
-                    id: category.id,
-                    name: category.name,
-                    limit: cap,
-                    spent: spent,
-                    colorHex: category.colorHex
-                )
-            )
+            summaries.append(CategorySummary(
+                id: category.id,
+                name: category.name,
+                limit: cap,
+                spent: spent,
+                colorHex: category.colorHex
+            ))
             totalBudget += cap
             totalSpent += spent
         }
-        
+
         let safeToSpend: Double
         if totalBudget > 0 {
-            // Allocated category budgets: remaining pool is total caps minus spend in those categories.
             safeToSpend = max(totalBudget - totalSpent, 0)
         } else {
-            // No category limits yet — show full monthly income as safe to spend.
             safeToSpend = max(totalMonthlyIncome, 0)
         }
 
@@ -150,18 +158,17 @@ final class DashboardViewModel: ObservableObject {
             self.safeToSpend = safeToSpend
         }
     }
-    
-    private static func double(fromFirestore value: Any?) -> Double {
+
+    private func doubleFromFirestore(_ value: Any?) -> Double {
         if let d = value as? Double { return d }
         if let n = value as? NSNumber { return n.doubleValue }
         if let i = value as? Int { return Double(i) }
         if let i = value as? Int64 { return Double(i) }
         return 0
     }
-    
-    private static func optionalDouble(_ value: Any?) -> Double? {
+
+    private func optionalDoubleFromFirestore(_ value: Any?) -> Double? {
         guard let value, !(value is NSNull) else { return nil }
-        return double(fromFirestore: value)
+        return doubleFromFirestore(value)
     }
 }
-

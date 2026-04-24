@@ -14,7 +14,7 @@ struct OnboardingBudgetStep: View {
         VStack(alignment: .leading, spacing: 0) {
             HeaderWithSubtitle(
                 title: "Budget Categories",
-                subtitle: "Set a monthly budget for each category"
+                subtitle: "Set a monthly budget for your selected categories"
             )
             .padding(.horizontal, 24)
 
@@ -28,15 +28,35 @@ struct OnboardingBudgetStep: View {
 
             ScrollView {
                 VStack(spacing: 12) {
-                    ForEach(TransactionCategory.allCases, id: \.self) { category in
+                    ForEach(Array(viewModel.selectedCategories).sorted { $0.rawValue < $1.rawValue }, id: \.self) { category in
                         BudgetCategoryRow(
                             category: category,
                             amount: Binding(
                                 get: { viewModel.categoryAllocations[category] ?? 0 },
                                 set: { viewModel.updateAllocation(for: category, amount: $0) }
-                            )
+                            ),
+                            isSelected: true
                         )
                     }
+
+                    let unselected = TransactionCategory.allCases.filter { !viewModel.selectedCategories.contains($0) }
+                    if !unselected.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Not selected")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 4)
+
+                            ForEach(unselected.sorted { $0.rawValue < $1.rawValue }, id: \.self) { category in
+                                BudgetCategoryRow(
+                                    category: category,
+                                    amount: .constant(0),
+                                    isSelected: false
+                                )
+                            }
+                        }
+                    }
+
                     Spacer().frame(height: 80)
                 }
                 .padding(.horizontal, 24)
@@ -48,8 +68,6 @@ struct OnboardingBudgetStep: View {
         }
     }
 }
-
-// MARK: - Income Summary Header
 
 private struct IncomeSummaryHeader: View {
     let totalIncome: Double
@@ -75,49 +93,63 @@ private struct IncomeSummaryHeader: View {
                     .foregroundStyle(isOverAllocated ? .red : Color("OliveGreen"))
             }
         }
+        .padding()
+        .background(Color("CardBackground"))
+        .cornerRadius(12)
     }
 }
-
-// MARK: - Budget Category Row
 
 private struct BudgetCategoryRow: View {
     let category: TransactionCategory
     @Binding var amount: Double
+    let isSelected: Bool
     @FocusState private var isFocused: Bool
 
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: category.iconName)
                 .font(.title3)
-                .foregroundStyle(Color("OliveGreen"))
+                .foregroundStyle(isSelected ? Color("OliveGreen") : Color.gray.opacity(0.4))
                 .frame(width: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(category.rawValue)
                     .font(.headline)
-                HStack(spacing: 4) {
-                    Text("$")
-                        .foregroundStyle(.secondary)
-                    TextField("0", value: $amount, format: .number)
-                        .keyboardType(.decimalPad)
-                        .focused($isFocused)
-                        .frame(width: 80)
-                    Text("/mo")
+                    .foregroundStyle(isSelected ? .primary : .secondary)
+
+                if isSelected {
+                    HStack(spacing: 4) {
+                        Text("$")
+                            .foregroundStyle(.secondary)
+                        TextField("0", value: $amount, format: .number)
+                            .keyboardType(.decimalPad)
+                            .focused($isFocused)
+                            .frame(width: 80)
+                        Text("/mo")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Text("Not selected")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
                 }
             }
 
             Spacer()
+
+            if !isSelected {
+                Image(systemName: "minus.circle")
+                    .foregroundStyle(Color.gray.opacity(0.3))
+            }
         }
         .padding()
-        .background(Color("CardBackground"))
+        .background(isSelected ? Color("CardBackground") : Color("CardBackground").opacity(0.5))
         .clipShape(.rect(cornerRadius: 12))
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .shadow(color: isSelected ? Color.black.opacity(0.05) : Color.clear, radius: 4, x: 0, y: 2)
+        .opacity(isSelected ? 1 : 0.5)
     }
 }
-
-// MARK: - Bottom Navigation
 
 private struct OnboardingBudgetBottomNav: View {
     @EnvironmentObject var viewModel: OnboardingViewModel
