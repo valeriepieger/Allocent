@@ -18,54 +18,21 @@ final class OnboardingViewModel: ObservableObject {
     enum Step: Int, CaseIterable {
         case welcome = 0
         case income = 1
-        case budgetCategories = 2
-        case bankLink = 3
+        case bankLink = 2
+        case categorySelection = 3
         case completion = 4
     }
 
     @Published var currentStep: Step = .welcome
-
+    @Published var selectedCategories: Set<TransactionCategory> = []
 
     @Published var incomeSources: [DraftIncome] = []
     @Published var newIncomeName: String = ""
     @Published var newIncomeAmount: Double?
 
 
-    // Category budget allocations keyed by TransactionCategory
-    @Published var categoryAllocations: [TransactionCategory: Double] = {
-        var defaults: [TransactionCategory: Double] = [:]
-        for category in TransactionCategory.allCases {
-            defaults[category] = 0
-        }
-        return defaults
-    }()
-
-    var totalAllocated: Double {
-        categoryAllocations.values.reduce(0, +)
-    }
-
-    var isOverAllocated: Bool {
-        totalAllocated > totalIncome
-    }
-
-    func updateAllocation(for category: TransactionCategory, amount: Double) {
-        categoryAllocations[category] = max(amount, 0)
-    }
-
     @Published var isSaving: Bool = false
     @Published var errorMessage: String?
-
-    struct PlaidSessionLink: Identifiable {
-        let id: String
-        let institution: String?
-    }
-
-    /// Plaid items linked during this onboarding session (for UI only until Firestore `plaidConnections` exists).
-    @Published private(set) var plaidLinksThisSession: [PlaidSessionLink] = []
-
-    func registerPlaidLink(itemId: String, institution: String?) {
-        plaidLinksThisSession.append(PlaidSessionLink(id: itemId, institution: institution))
-    }
 
 
     struct DraftIncome: Identifiable {
@@ -86,10 +53,6 @@ final class OnboardingViewModel: ObservableObject {
     var canAddIncome: Bool {
         let trimmed = newIncomeName.trimmingCharacters(in: .whitespaces)
         return !trimmed.isEmpty && (newIncomeAmount ?? 0) > 0
-    }
-
-    var isBudgetFullyAllocated: Bool {
-        totalIncome > 0 && totalAllocated == totalIncome
     }
 
     var stepCount: Int {
@@ -140,7 +103,7 @@ final class OnboardingViewModel: ObservableObject {
         do {
             let batch = db.batch()
 
-            //write income sources
+            // write income sources
             for source in incomeSources {
                 let ref = userRef.collection("income_sources").document()
                 batch.setData([
@@ -150,21 +113,21 @@ final class OnboardingViewModel: ObservableObject {
                 ], forDocument: ref)
             }
 
-            //write categories with user-set budget allocations
-            for category in TransactionCategory.allCases {
-                let ref = userRef.collection("categories").document()
-                let limit = categoryAllocations[category] ?? 0
+            // write only selected categories using name as document ID
+            for category in selectedCategories {
+                let ref = userRef.collection("categories").document(category.rawValue)
                 batch.setData([
                     "name": category.rawValue,
-                    "limit": limit
+                    "limit": 0.0
                 ], forDocument: ref)
             }
 
+            // save visibleCategories array to user document
+            batch.setData([
+                "visibleCategories": selectedCategories.map { $0.rawValue }
+            ], forDocument: userRef, merge: true)
+
             try await batch.commit()
-
-            let monthKey = ExpenseCategoryAllocationService.currentMonthKey()
-            try await ExpenseCategoryAllocationService.allocateCategoryIdsForMonth(monthKey)
-
             isSaving = false
         } catch {
             isSaving = false

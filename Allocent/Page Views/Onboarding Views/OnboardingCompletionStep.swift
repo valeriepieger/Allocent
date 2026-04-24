@@ -95,31 +95,20 @@ struct OnboardingCompletionStep: View {
                         .font(.headline)
                 }
 
-                ForEach(TransactionCategory.allCases, id: \.self) { category in
+                Text("We've set up default spending categories for you:")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                ForEach(Array(viewModel.selectedCategories).sorted { $0.rawValue < $1.rawValue }, id: \.self) { category in
                     HStack(spacing: 8) {
-                        Image(systemName: category.iconName)
-                            .foregroundStyle(Color("OliveGreen"))
-                            .frame(width: 20)
+                        Text(category.emoji)
                         Text(category.rawValue)
                             .font(.subheadline)
-                        Spacer()
-                        let amount = viewModel.categoryAllocations[category] ?? 0
-                        Text(amount, format: .currency(code: "USD"))
-                            .font(.subheadline.weight(.medium))
                             .foregroundStyle(.secondary)
                     }
                 }
 
                 Divider()
-
-                HStack {
-                    Text("Total Allocated")
-                        .font(.subheadline.weight(.semibold))
-                    Spacer()
-                    Text(viewModel.totalAllocated, format: .currency(code: "USD"))
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Color("OliveGreen"))
-                }
 
                 Text("You can customize these anytime in Categories.")
                     .font(.caption)

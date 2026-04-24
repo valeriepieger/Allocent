@@ -27,7 +27,7 @@ struct OnboardingView: View {
                 .padding(.top, 8)
 
                 // Step content
-                Group {
+                ZStack {
                     switch viewModel.currentStep {
                     case .welcome:
                         welcomeStep
@@ -37,14 +37,18 @@ struct OnboardingView: View {
                         OnboardingBudgetStep()
                     case .bankLink:
                         OnboardingBankLinkStep()
+                    case .categorySelection:
+                        OnboardingCategoryStep()
                     case .completion:
                         OnboardingCompletionStep(user: user)
                     }
                 }
+                .id(viewModel.currentStep)
                 .transition(.asymmetric(
                     insertion: .move(edge: .trailing).combined(with: .opacity),
                     removal: .move(edge: .leading).combined(with: .opacity)
                 ))
+                .animation(.easeInOut(duration: 0.3), value: viewModel.currentStep)
             }
         }
         .environmentObject(viewModel)
