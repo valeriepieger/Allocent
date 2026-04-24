@@ -124,7 +124,6 @@ export const plaidCreateLinkToken = onCall(
     }
     const env = parseEnv(request.data?.environment);
     const client = getPlaidClient(env);
-
     const resp = await client.linkTokenCreate({
       user: { client_user_id: request.auth.uid },
       client_name: "Allocent",
